@@ -25,7 +25,7 @@ st.sidebar.markdown("---")
 
 # Restart conversation button
 if st.sidebar.button("Restart Conversation"):
-    st.session_state.messages = []
+    st.session_state.clear()
     st.rerun()
 
 # Main title
@@ -44,8 +44,10 @@ on your technology stack.
 # Initialize session state
 if "messages" not in st.session_state:
     st.session_state.messages = []
+    st.session_state.step = 0
+    st.session_state.data = {}
 
-    # Greeting message
+    # Greeting
     st.session_state.messages.append(
         ("assistant", "Hello! I am the TalentScout Hiring Assistant. Let's begin the screening process.")
     )
@@ -70,7 +72,7 @@ if user_input:
 
     st.session_state.messages.append(("user", user_input))
 
-    response = process_input(user_input)
+    response = process_input(user_input, st.session_state)
 
     st.session_state.messages.append(("assistant", response))
 

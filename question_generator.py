@@ -1,11 +1,25 @@
 import google.generativeai as genai
 import streamlit as st
+import os
+from dotenv import load_dotenv
 from prompts import TECH_QUESTION_PROMPT
 
-# Configure API key from Streamlit secrets
-genai.configure(api_key=st.secrets["GEMINI_API_KEY"])
+# Load .env for local
+load_dotenv()
 
-# Use stable model
+# Get API key safely
+api_key = None
+
+try:
+    # Try Streamlit Cloud secrets
+    api_key = st.secrets["GEMINI_API_KEY"]
+except Exception:
+    # Fallback to local .env
+    api_key = os.getenv("GEMINI_API_KEY")
+
+# Configure Gemini
+genai.configure(api_key=api_key)
+
 model = genai.GenerativeModel("gemini-1.5-pro")
 
 
@@ -27,7 +41,7 @@ Based on your tech stack (**{tech_stack}**), here are some questions:
         else:
             raise Exception("Empty response")
 
-    except Exception as e:
+    except Exception:
         return f"""
 ### Technical Screening Questions
 
@@ -43,7 +57,7 @@ SQL
 
 Java
 1. What is JVM and how does it work?
-2. Explain the difference between JDK, JRE, and JVM.
+2. Explain JDK vs JRE vs JVM.
 
-(Note: AI service fallback used due to temporary issue.)
+(Note: AI fallback used.)
 """

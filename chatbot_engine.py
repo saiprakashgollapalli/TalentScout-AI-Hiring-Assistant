@@ -12,49 +12,48 @@ questions = [
     "Please list your tech stack (languages, frameworks, tools)"
 ]
 
-candidate_data = {}
 
-current_step = 0
+def process_input(user_input, state):
 
+    # Initialize state
+    if "step" not in state:
+        state.step = 0
 
-def process_input(user_input):
+    if "data" not in state:
+        state.data = {}
 
-    global current_step
-
+    # Exit condition
     if user_input.lower() in ["exit", "quit", "bye"]:
         return "Thank you for your time. TalentScout will contact you soon."
 
     # Email validation
-    if current_step == 1:
+    if state.step == 1:
         if not validate_email(user_input):
             return "Please enter a valid email address."
 
     # Phone validation
-    if current_step == 2:
+    if state.step == 2:
         if not validate_phone(user_input):
             return "Please enter a valid 10-digit phone number."
 
-    if current_step < len(questions):
+    # Store response
+    key = questions[state.step]
+    state.data[key] = user_input
 
-        key = questions[current_step]
+    state.step += 1
 
-        candidate_data[key] = user_input
+    # Ask next question
+    if state.step < len(questions):
+        return questions[state.step]
 
-        current_step += 1
+    # Final step → generate AI questions
+    tech_stack = user_input
 
-        if current_step < len(questions):
+    tech_questions = generate_questions(tech_stack)
 
-            return questions[current_step]
+    save_candidate(state.data)
 
-        else:
-
-            tech_stack = user_input
-
-            tech_questions = generate_questions(tech_stack)
-
-            save_candidate(candidate_data)
-
-            return f"""
+    return f"""
 Thank you for providing your details.
 
 Your profile has been recorded successfully.
@@ -63,5 +62,3 @@ Your profile has been recorded successfully.
 
 TalentScout recruitment team will review your profile and contact you for the next steps.
 """
-
-    return "Thank you!"
