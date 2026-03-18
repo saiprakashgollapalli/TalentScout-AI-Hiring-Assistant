@@ -15,43 +15,38 @@ questions = [
 
 def process_input(user_input, state):
 
-    # Initialize state
-    if "step" not in state:
-        state.step = 0
-
-    if "data" not in state:
-        state.data = {}
-
-    # Exit condition
+    # Exit
     if user_input.lower() in ["exit", "quit", "bye"]:
         return "Thank you for your time. TalentScout will contact you soon."
 
-    # Email validation
-    if state.step == 1:
-        if not validate_email(user_input):
-            return "Please enter a valid email address."
+    step = state.step
 
-    # Phone validation
-    if state.step == 2:
-        if not validate_phone(user_input):
-            return "Please enter a valid 10-digit phone number."
+    # Validation
+    if step == 1 and not validate_email(user_input):
+        return "Please enter a valid email address."
 
-    # Store response
-    key = questions[state.step]
-    state.data[key] = user_input
+    if step == 2 and not validate_phone(user_input):
+        return "Please enter a valid 10-digit phone number."
 
+    # Save data
+    state.data[questions[step]] = user_input
+
+    # Move step forward
     state.step += 1
 
     # Ask next question
     if state.step < len(questions):
         return questions[state.step]
 
-    # Final step → generate AI questions
+    # Final step
     tech_stack = user_input
 
     tech_questions = generate_questions(tech_stack)
 
     save_candidate(state.data)
+
+    # Reset step to avoid bugs after completion
+    state.step = len(questions)
 
     return f"""
 Thank you for providing your details.
