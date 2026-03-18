@@ -1,77 +1,104 @@
 import streamlit as st
-from chatbot_engine import process_input, questions
+from chatbot_engine import process_input, questions_en, questions_hi
 
-st.set_page_config(page_title="TalentScout Hiring Assistant")
+st.set_page_config(page_title="TalentScout Hiring Assistant", layout="wide")
+progress = st.session_state.get("step", 0) / 7
+st.progress(progress, text=f"Step {st.session_state.get('step', 0)+1} of 7")
+
+# 🎨 ADVANCED UI STYLING
+st.markdown("""
+<style>
+.main {
+    background-color: #0e1117;
+}
+.stChatMessage {
+    border-radius: 12px;
+    padding: 12px;
+    margin-bottom: 10px;
+}
+[data-testid="stChatMessage-user"] {
+    background-color: #1f77b4;
+    color: white;
+}
+[data-testid="stChatMessage-assistant"] {
+    background-color: #262730;
+    color: white;
+}
+.stTextInput>div>div>input {
+    border-radius: 20px;
+}
+</style>
+""", unsafe_allow_html=True)
+
+# 🌍 Language selector
+language = st.sidebar.selectbox("🌍 Select Language", ["English", "Hindi"])
+st.session_state.language = language
 
 # Sidebar
-st.sidebar.title("TalentScout Hiring Assistant")
+st.sidebar.title("🎯 TalentScout Assistant")
+st.sidebar.info("AI-powered candidate screening chatbot")
 
-st.sidebar.markdown(
-"""
-Welcome to the **TalentScout AI Hiring Assistant**.
 
-This assistant performs the **initial candidate screening process** by:
-
-• Collecting candidate personal details  
-• Understanding professional experience  
-• Identifying the candidate's tech stack  
-• Generating relevant technical interview questions  
-
-You can type **exit** anytime in the chat to end the conversation.
-"""
-)
-
-st.sidebar.markdown("---")
-
-# Restart conversation button
-if st.sidebar.button("Restart Conversation"):
-    st.session_state.messages = []
+if st.sidebar.button("🔄 Restart"):
+    st.session_state.clear()
     st.rerun()
 
-# Main title
-st.title("🤖 TalentScout AI Hiring Assistant")
+# Main Title
+st.markdown("""
+<h1 style='text-align: center; color: white;'>
+🤖 TalentScout AI Hiring Assistant
+</h1>
+""", unsafe_allow_html=True)
 
-st.markdown(
-"""
-Welcome to **TalentScout Recruitment Agency**.
+st.success("🚀 AI-powered Hiring Assistant is ready!")
 
-This AI assistant will guide you through a short screening process
-by collecting your details and generating technical questions based
-on your technology stack.
-"""
-)
+# Select questions
+questions = questions_hi if language == "Hindi" else questions_en
 
-# Initialize session state
-if "messages" not in st.session_state:
+# Initialize session
+if "step" not in st.session_state or st.session_state.get("language") != language:
+    st.session_state.step = 0
+    st.session_state.data = {}
     st.session_state.messages = []
+    st.session_state.language = language
 
-    # Greeting message
-    st.session_state.messages.append(
-        ("assistant", "Hello! I am the TalentScout Hiring Assistant. Let's begin the screening process.")
+    questions = questions_hi if language == "Hindi" else questions_en
+
+    greeting = (
+        "नमस्ते! मैं TalentScout Hiring Assistant हूँ।"
+        if language == "Hindi"
+        else "Hello! I am the TalentScout Hiring Assistant."
     )
 
-    # First question
-    st.session_state.messages.append(
-        ("assistant", questions[0])
-    )
-
-# Display chat history
+    st.session_state.messages.append(("assistant", greeting))
+    st.session_state.messages.append(("assistant", questions[0]))
+# 💬 Display chat with avatars
 for role, message in st.session_state.messages:
-
-    if role == "user":
-        st.chat_message("user").write(message)
+    if role == "assistant":
+        with st.chat_message("assistant", avatar="🤖"):
+            st.markdown(message)
     else:
-        st.chat_message("assistant").write(message)
+        with st.chat_message("user", avatar="👤"):
+            st.markdown(message)
 
-# User input
-user_input = st.chat_input("Type your message here...")
+# 💬 Input box
+user_input = st.chat_input("💬 Type your message...")
 
 if user_input:
-
     st.session_state.messages.append(("user", user_input))
-
-    response = process_input(user_input)
+    with st.spinner("🤖 Thinking..."):
+        response = process_input(user_input, st.session_state)
 
     st.session_state.messages.append(("assistant", response))
 
     st.rerun()
+    st.markdown("""
+<style>
+[data-testid="stChatMessage-user"] {
+    text-align: right;
+}
+[data-testid="stChatMessage-assistant"] {
+    text-align: left;
+}
+</style>
+""", unsafe_allow_html=True)

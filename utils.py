@@ -1,11 +1,16 @@
 import re
 
-
 def validate_email(email):
-    pattern = r'^[\w\.-]+@[\w\.-]+\.\w+$'
-    return re.match(pattern, email)
-
+    return re.match(r"[^@]+@[^@]+\.[^@]+", email)
 
 def validate_phone(phone):
-    pattern = r'^\d{10}$'
-    return re.match(pattern, phone)
+    return phone.isdigit() and len(phone) == 10
+
+def detect_sentiment(text):
+    negative_words = ["bad", "hard", "difficult", "confusing"]
+
+    for word in negative_words:
+        if word in text.lower():
+            return "negative"
+
+    return "neutral"

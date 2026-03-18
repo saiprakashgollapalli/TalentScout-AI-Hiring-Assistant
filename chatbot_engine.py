@@ -1,8 +1,9 @@
 from question_generator import generate_questions
 from data_store import save_candidate
-from utils import validate_email, validate_phone
+from utils import validate_email, validate_phone, detect_sentiment
 
-questions = [
+# English questions
+questions_en = [
     "What is your Full Name?",
     "What is your Email Address?",
     "What is your Phone Number? (10 digits)",
@@ -12,56 +13,64 @@ questions = [
     "Please list your tech stack (languages, frameworks, tools)"
 ]
 
-candidate_data = {}
+# Hindi questions
+questions_hi = [
+    "आपका पूरा नाम क्या है?",
+    "आपका ईमेल पता क्या है?",
+    "आपका फोन नंबर क्या है? (10 अंक)",
+    "आपके पास कितने वर्षों का अनुभव है?",
+    "आप किस पद के लिए आवेदन कर रहे हैं?",
+    "आपका वर्तमान स्थान क्या है?",
+    "कृपया अपना टेक स्टैक बताएं (भाषाएं, फ्रेमवर्क, टूल्स)"
+]
 
-current_step = 0
 
+def process_input(user_input, state):
 
-def process_input(user_input):
-
-    global current_step
-
+    # Exit
     if user_input.lower() in ["exit", "quit", "bye"]:
-        return "Thank you for your time. TalentScout will contact you soon."
+        return "धन्यवाद! हम आपसे संपर्क करेंगे।" if state.get("language") == "Hindi" else "Thank you for your time. TalentScout will contact you soon."
 
-    # Email validation
-    if current_step == 1:
-        if not validate_email(user_input):
-            return "Please enter a valid email address."
+    language = state.get("language", "English")
+    questions = questions_hi if language == "Hindi" else questions_en
 
-    # Phone validation
-    if current_step == 2:
-        if not validate_phone(user_input):
-            return "Please enter a valid 10-digit phone number."
+    step = state.step
 
-    if current_step < len(questions):
+    # Sentiment detection
+    sentiment = detect_sentiment(user_input)
+    if sentiment == "negative":
+        return "कोई बात नहीं, आप आराम से जवाब दें।" if language == "Hindi" else "I understand, take your time."
 
-        key = questions[current_step]
+    # Validation
+    if step == 1 and not validate_email(user_input):
+        return "कृपया सही ईमेल दर्ज करें।" if language == "Hindi" else "Please enter a valid email address."
 
-        candidate_data[key] = user_input
+    if step == 2 and not validate_phone(user_input):
+        return "कृपया सही 10 अंकों का फोन नंबर दर्ज करें।" if language == "Hindi" else "Please enter a valid 10-digit phone number."
 
-        current_step += 1
+    # Save data
+    state.data[questions[step]] = user_input
 
-        if current_step < len(questions):
+    state.step += 1
 
-            return questions[current_step]
+    # Ask next question
+    if state.step < len(questions):
+        return questions[state.step]
 
-        else:
+    # Final step
+    tech_stack = user_input
+    tech_questions = generate_questions(tech_stack)
 
-            tech_stack = user_input
+    save_candidate(state.data)
 
-            tech_questions = generate_questions(tech_stack)
+    name = state.data.get(questions[0], "Candidate")
 
-            save_candidate(candidate_data)
+    return f"""
+{"धन्यवाद" if language == "Hindi" else "Thank you"} {name}.
 
-            return f"""
-Thank you for providing your details.
-
-Your profile has been recorded successfully.
+{"आपकी जानकारी सफलतापूर्वक दर्ज की गई है।" if language == "Hindi" else "Your profile has been recorded successfully."}
 
 {tech_questions}
 
-TalentScout recruitment team will review your profile and contact you for the next steps.
+{"हमारी टीम आपसे संपर्क करेगी।" if language == "Hindi" else "TalentScout recruitment team will contact you."}
 """
-
-    return "Thank you!"
