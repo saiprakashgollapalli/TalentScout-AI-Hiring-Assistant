@@ -196,8 +196,3 @@ It provides a scalable, efficient, and intelligent solution for initial candidat
 
 ---
 
-## 13. Links
-
-* GitHub Repository: [Paste your GitHub link here]
-* Live App: [Paste your Streamlit link here]
-* Demo Video: [Paste your Loom link here]
